@@ -11,13 +11,17 @@ spec = {'name': 'my_vm_instance',
 my_vm = saturn.boot_vm(spec)
 
 # check status
+print 'Status:',
 print my_vm.status
 
 # wait for boot/networking etc
 my_vm.wait_until(my_vm.ACTIVE)
+print 'Running'
 
 # get connection info
 net_info = my_vm.network_info
+print 'Net Info:',
+print net_info
 
 # do something with your VM
 #do_stuff(my_vm)
@@ -27,6 +31,7 @@ my_vm.destroy()
 
 # wait until its gone
 my_vm.wait_until(my_vm.DELETED)
+print 'Destroyed'
 
 
 
