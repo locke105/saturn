@@ -20,6 +20,7 @@ import shutil
 import urllib
 import uuid
 
+from saturn import images
 from saturn import virt
 
 
@@ -49,6 +50,9 @@ class HostController(object):
     def list_vms(self):
         return self.manager.list_domains()
 
+    def get_vm(self, instance_id):
+        return self.manager.find_domain(instance_id)
+
 
 class InstanceStore(object):
 
@@ -60,8 +64,11 @@ class InstanceStore(object):
         os.makedirs(instance_dir + '/images')
 
         # get image
-        urllib.urlretrieve(vm_spec.image, instance_dir + '/images/disk.part')
-        os.rename(instance_dir + '/images/disk.part', instance_dir + '/images/disk')
+        image_id = images.store.lookup_by_url(vm_spec.image)
+        if not image_id:
+            image_id = images.store.add(vm_spec.image)
+
+        images.store.copy(image_id, instance_dir + '/images/disk')
 
         return {'image_file_path': instance_dir + '/images/disk'}
 
@@ -118,6 +125,9 @@ class Domain(object):
         <console type='pty'>
           <target type='serial' port='0'/>
         </console>
+        <interface type='network'>
+          <source network='default'/>
+        </interface>
       </devices>
     </domain>
     """

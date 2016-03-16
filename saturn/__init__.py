@@ -23,10 +23,21 @@ class Instance(object):
 
     def __init__(self, instance_id):
         self.id = instance_id
+        self._domain_obj = None
 
     @property
-    def status(self):
-        return None
+    def _domain(self):
+        if self._domain_obj is None:
+            self._domain_obj = host_api.HostController().get_vm(self.id)
+        return self._domain_obj
+
+    @property
+    def name(self):
+        return self._domain.name()
+
+    @property
+    def state(self):
+        return self._domain.state()
 
     @property
     def network_info(self):
@@ -37,6 +48,22 @@ class Instance(object):
 
     def destroy(self):
         host_api.HostController().delete_vm(self.id)
+
+    def __getattr__(self, name):
+        if not self._domain:
+            raise AttributeError
+        try:
+            return getattr(self._domain, name)
+        except AttributeError:
+            # squelch inner attribute not found
+            raise AttributeError
+
+    @staticmethod
+    def _from_domain(domain):
+        inst = Instance(domain.UUIDString())
+        inst._domain_obj = domain
+        return inst
+
 
 
 def boot_vm(instance_spec):
@@ -51,7 +78,7 @@ def boot_vm(instance_spec):
 
 def list_vms():
     host = host_api.HostController()
-    return host.list_vms()
+    return map(Instance._from_domain, host.list_vms())
 
 
 def get_vm(instance_id):

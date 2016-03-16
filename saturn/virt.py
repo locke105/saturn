@@ -17,8 +17,10 @@
 #  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import time
+import re
 
 import libvirt
+
 
 
 class DomainNotFound(Exception):
@@ -114,6 +116,21 @@ def print_connection_info(conn):
 def drop_to_interactive():
     import code
     code.interact(local=dict(globals(), **locals()))
+
+
+def build_state_map():
+    symbols = dir(libvirt)
+    state_map = {}
+
+    for symbol in symbols:
+        match = re.match('^VIR_DOMAIN_([A-Z0-9]+)$', symbol)
+        if match is not None:
+            state_map[getattr(libvirt, symbol)] = match.group(1)
+
+    return state_map
+
+
+state_map = build_state_map()
 
 
 if __name__ == '__main__':

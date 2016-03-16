@@ -20,19 +20,27 @@ import saturn
 
 
 def create_vm(args):
-    raise NotImplementedError
+    spec = {'image': args.image,
+            'name': args.name}
+
+    vm = saturn.boot_vm(spec)
+    _print_vm(vm)
 
 
 def destroy_vm(args):
     saturn.get_vm(args.instance_id).destroy()
 
 
+def _print_vm(vm):
+    print '- uuid: %s' % vm.id
+    print '  name: %s' % vm.name
+    print '  state: %s' % vm.state
+
+
 def list_vms(args):
     print '---'
     for vm in saturn.list_vms():
-        print '- uuid: %s' % vm.UUIDString()
-        print '  name: %s' % vm.name()
-        print '  state: %s' % vm.state()
+        _print_vm(vm)
 
 
 def _parse_args():
@@ -41,6 +49,8 @@ def _parse_args():
 
     boot_p = subp.add_parser('boot')
     boot_p.set_defaults(func=create_vm)
+    boot_p.add_argument('image')
+    boot_p.add_argument('--name')
 
     rm_p = subp.add_parser('rm')
     rm_p.set_defaults(func=destroy_vm)
