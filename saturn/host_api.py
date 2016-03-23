@@ -118,7 +118,7 @@ class VMSpec(object):
               'public_keys': {}}
 
         key_list = self.orig_spec.get('public_ssh_keys', [])
-        for key,idx in enumerate(key_list):
+        for idx,key in enumerate(key_list):
             md['public_keys']['key%d' % idx] = key
 
         return md
