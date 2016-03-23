@@ -15,11 +15,10 @@
 #  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from saturn import host_api
+from saturn import virt
 
 
 class Instance(object):
-    DELETED = 0
-    ACTIVE = 1
 
     def __init__(self, instance_id):
         self.id = instance_id
@@ -37,7 +36,8 @@ class Instance(object):
 
     @property
     def state(self):
-        return self._domain.state()
+        state = self._domain.state()
+        return virt.state_map.get(state[0], 'UNKNOWN')
 
     @property
     def network_info(self):
