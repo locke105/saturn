@@ -20,6 +20,7 @@ import shutil
 import urllib
 import uuid
 
+from saturn import configdrive
 from saturn import images
 from saturn import virt
 
@@ -35,6 +36,7 @@ class HostController(object):
 
         # build xml and spawn
         domain = Domain(vm_spec)
+        domain.add_config_drive(instance_store_info['config_drive_path'])
         domain.add_disk(instance_store_info['image_file_path'])
         self.manager.create_domain(domain.get_xml())
 
@@ -70,7 +72,17 @@ class InstanceStore(object):
 
         images.store.copy(image_id, instance_dir + '/images/disk')
 
-        return {'image_file_path': instance_dir + '/images/disk'}
+        cd_path = self._build_config_drive(vm_spec)
+
+        return {'image_file_path': instance_dir + '/images/disk',
+                'config_drive_path': cd_path}
+
+    def _build_config_drive(self, vm_spec):
+        md = vm_spec.assemble_metadata()
+        config_drive_path = configdrive.build_config_drive(
+                instance_dir=self._get_instance_dir(vm_spec.id),
+                metadata=md)
+        return config_drive_path
 
     def remove(self, instance_id):
         instance_dir = self._get_instance_dir(instance_id)
@@ -99,6 +111,18 @@ class VMSpec(object):
     def orig_spec(self):
         return dict(self._spec_dict)
 
+    def assemble_metadata(self):
+        md = {'uuid': self.id,
+              'name': self.name,
+              'availability_zone': 'saturn',
+              'public_keys': {}}
+
+        key_list = self.orig_spec.get('public_ssh_keys', [])
+        for key,idx in enumerate(key_list):
+            md['public_keys']['key%d' % idx] = key
+
+        return md
+
 
 class Domain(object):
     _base_xml = """
@@ -118,6 +142,12 @@ class Domain(object):
           <driver name='qemu' type='qcow2'/>
           <source file='%(disk_file_path)s'/>
           <target dev='sda' bus='%(disk_bus_type)s'/>
+        </disk>
+        <disk type='file' device='cdrom'>
+          <driver name='qemu' type='raw'/>
+          <source file='%(config_drive_file_path)s'/>
+          <target dev='sdb' bus='ide'/>
+          <readonly/>
         </disk>
         <serial type='pty'>
           <target port='0'/>
@@ -140,6 +170,9 @@ class Domain(object):
     def add_disk(self, disk_file_path):
         self._props.update({'disk_file_path': disk_file_path,
                             'disk_bus_type': self._get_disk_type()})
+
+    def add_config_drive(self, config_drive_path):
+        self._props.update({'config_drive_file_path': config_drive_path})
 
     def get_xml(self):
         return self._base_xml % self._props

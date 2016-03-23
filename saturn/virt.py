@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 #  Copyright (C) 2016 Mathew Odden
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -131,7 +129,3 @@ def build_state_map():
 
 
 state_map = build_state_map()
-
-
-if __name__ == '__main__':
-    print_connection_info(None)
