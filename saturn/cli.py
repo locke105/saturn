@@ -15,13 +15,24 @@
 #  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import argparse
+import os.path
 
 import saturn
 
 
 def create_vm(args):
     spec = {'image': args.image,
-            'name': args.name}
+            'name': args.name,
+            'public_ssh_keys': []}
+
+    if args.ssh_key:
+        spec['public_ssh_keys'].append(args.ssh_key)
+    else:
+        key_file_path = os.path.expanduser('~/.ssh/id_rsa.pub')
+        if os.path.exists(key_file_path):
+            with open(key_file_path) as key_file:
+                pub_key = key_file.read()
+                spec['public_ssh_keys'].append(pub_key)
 
     vm = saturn.boot_vm(spec)
     _print_vm(vm)
@@ -51,6 +62,7 @@ def _parse_args():
     boot_p.set_defaults(func=create_vm)
     boot_p.add_argument('image')
     boot_p.add_argument('--name')
+    boot_p.add_argument('--ssh-key')
 
     rm_p = subp.add_parser('rm')
     rm_p.set_defaults(func=destroy_vm)
