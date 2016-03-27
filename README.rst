@@ -34,6 +34,6 @@ List currently running::
 
   saturn ls
 
-Terminate at machine::
+Terminate a machine::
 
   saturn rm <UUID>
