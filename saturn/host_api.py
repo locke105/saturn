@@ -22,6 +22,7 @@ import uuid
 
 from saturn import configdrive
 from saturn import images
+from saturn.utils import name_gen
 from saturn import virt
 
 
@@ -98,18 +99,24 @@ class InstanceStore(object):
 class VMSpec(object):
 
     def __init__(self, spec_dict):
-        self._spec_dict = spec_dict
+        self._spec_dict = dict(spec_dict)
 
         required = ['name', 'image']
 
+        if not spec_dict.get('name'):
+            spec_dict['name'] = name_gen.gen_name()
+
         for prop in required:
             setattr(self, prop, spec_dict[prop])
+
+        if self.name is not None:
+            self.name = self.name.replace(' ', '_')
 
         self.id = str(uuid.uuid4())
 
     @property
     def orig_spec(self):
-        return dict(self._spec_dict)
+        return self._spec_dict
 
     def assemble_metadata(self):
         md = {'uuid': self.id,
